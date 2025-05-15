@@ -6,7 +6,6 @@ import {
   TrendingUp, 
   AlertTriangle, 
   Package, 
-  MoreHorizontal,
   Users,
   ArrowUp,
   ArrowDown
@@ -84,7 +83,7 @@ const Dashboard: React.FC = () => {
       </div>
       
       {/* Recent Sales and Low Stock Products */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Sales */}
         <div className="bg-white rounded-lg shadow">
           <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
@@ -218,65 +217,6 @@ const Dashboard: React.FC = () => {
               </Button>
             </div>
           )}
-        </div>
-      </div>
-      
-      {/* Sales Summary */}
-      <div className="bg-white rounded-lg shadow mb-6">
-        <div className="px-4 py-3 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Sales Summary</h3>
-        </div>
-        
-        <div className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-blue-50 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-blue-900">This Month</p>
-                <ArrowUp size={16} className="text-emerald-500" />
-              </div>
-              <p className="text-2xl font-bold text-blue-900">
-                {formatCurrency(totalRevenue * 0.6)}
-              </p>
-              <p className="text-xs text-blue-700 mt-1">
-                +15% from last month
-              </p>
-            </div>
-            
-            <div className="bg-emerald-50 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-emerald-900">This Week</p>
-                <ArrowUp size={16} className="text-emerald-500" />
-              </div>
-              <p className="text-2xl font-bold text-emerald-900">
-                {formatCurrency(totalRevenue * 0.25)}
-              </p>
-              <p className="text-xs text-emerald-700 mt-1">
-                +8% from last week
-              </p>
-            </div>
-            
-            <div className="bg-amber-50 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-amber-900">Today</p>
-                <ArrowDown size={16} className="text-red-500" />
-              </div>
-              <p className="text-2xl font-bold text-amber-900">
-                {formatCurrency(totalRevenue * 0.05)}
-              </p>
-              <p className="text-xs text-amber-700 mt-1">
-                -3% from yesterday
-              </p>
-            </div>
-          </div>
-          
-          <div className="mt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/reports')}
-            >
-              View Detailed Reports
-            </Button>
-          </div>
         </div>
       </div>
     </div>

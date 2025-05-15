@@ -7,6 +7,13 @@ const Settings: React.FC = () => {
   const { currentUser } = useAppContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<string>(currentUser?.avatar || '');
+  const [formData, setFormData] = useState({
+    name: currentUser?.name || '',
+    email: currentUser?.email || '',
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [notifications, setNotifications] = useState(true);
+  const [stockAlerts, setStockAlerts] = useState(true);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -15,9 +22,31 @@ const Settings: React.FC = () => {
       reader.onloadend = () => {
         const base64String = reader.result as string;
         setPreviewImage(base64String);
-        // Update user avatar logic here
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSaveChanges = async () => {
+    setIsLoading(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Show success message
+      alert('Settings saved successfully!');
+    } catch (error) {
+      alert('Failed to save settings. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -58,7 +87,7 @@ const Settings: React.FC = () => {
                 ) : (
                   <div className="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center">
                     <span className="text-2xl text-gray-500">
-                      {currentUser?.name?.charAt(0).toUpperCase()}
+                      {formData.name?.charAt(0).toUpperCase()}
                     </span>
                   </div>
                 )}
@@ -85,7 +114,9 @@ const Settings: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700">Name</label>
                   <input
                     type="text"
-                    value={currentUser?.name}
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   />
                 </div>
@@ -93,14 +124,20 @@ const Settings: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700">Email</label>
                   <input
                     type="email"
-                    value={currentUser?.email}
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   />
                 </div>
               </div>
 
               <div className="mt-6">
-                <Button variant="primary">
+                <Button 
+                  variant="primary"
+                  onClick={handleSaveChanges}
+                  isLoading={isLoading}
+                >
                   Save Changes
                 </Button>
               </div>
@@ -121,7 +158,12 @@ const Settings: React.FC = () => {
                     <span className="ml-3 text-sm text-gray-700">Notifications</span>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" defaultChecked />
+                    <input 
+                      type="checkbox" 
+                      className="sr-only peer" 
+                      checked={notifications}
+                      onChange={(e) => setNotifications(e.target.checked)}
+                    />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
@@ -132,7 +174,12 @@ const Settings: React.FC = () => {
                     <span className="ml-3 text-sm text-gray-700">Stock Alerts</span>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" defaultChecked />
+                    <input 
+                      type="checkbox" 
+                      className="sr-only peer" 
+                      checked={stockAlerts}
+                      onChange={(e) => setStockAlerts(e.target.checked)}
+                    />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
