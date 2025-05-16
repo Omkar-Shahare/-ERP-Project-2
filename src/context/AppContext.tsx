@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product, Sale, Notification, User } from '../types';
 import { generateId } from '../utils/formatters';
-import mockData from '../data/mockData';
 
 interface AppContextType {
   // State
@@ -23,151 +22,199 @@ interface AppContextType {
   logout: () => void;
 }
 
+const API_URL = 'http://localhost:5000/api';
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize state with mock data or from localStorage
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  // Load data from localStorage on component mount
+  // Check authentication status on mount
   useEffect(() => {
-    const loadData = () => {
-      const storedProducts = localStorage.getItem('erp_products');
-      const storedSales = localStorage.getItem('erp_sales');
-      const storedNotifications = localStorage.getItem('erp_notifications');
-      const storedUser = localStorage.getItem('erp_currentUser');
-
-      // Load products or use mock data
-      if (storedProducts) {
-        setProducts(JSON.parse(storedProducts));
-      } else {
-        setProducts(mockData.products);
-        localStorage.setItem('erp_products', JSON.stringify(mockData.products));
-      }
-
-      // Load sales or use mock data
-      if (storedSales) {
-        setSales(JSON.parse(storedSales));
-      } else {
-        setSales(mockData.sales);
-        localStorage.setItem('erp_sales', JSON.stringify(mockData.sales));
-      }
-
-      // Load notifications or use mock data
-      if (storedNotifications) {
-        setNotifications(JSON.parse(storedNotifications));
-      } else {
-        setNotifications(mockData.notifications);
-        localStorage.setItem('erp_notifications', JSON.stringify(mockData.notifications));
-      }
-
-      // Load user if exists
-      if (storedUser) {
-        setCurrentUser(JSON.parse(storedUser));
-      } else {
-        setCurrentUser(mockData.currentUser);
-        localStorage.setItem('erp_currentUser', JSON.stringify(mockData.currentUser));
-      }
-    };
-
-    loadData();
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetchUserProfile(token);
+    }
   }, []);
 
-  // Save data to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('erp_products', JSON.stringify(products));
-  }, [products]);
+  const fetchUserProfile = async (token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/users/profile`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
-  useEffect(() => {
-    localStorage.setItem('erp_sales', JSON.stringify(sales));
-  }, [sales]);
-
-  useEffect(() => {
-    localStorage.setItem('erp_notifications', JSON.stringify(notifications));
-  }, [notifications]);
-
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem('erp_currentUser', JSON.stringify(currentUser));
+      if (response.ok) {
+        const userData = await response.json();
+        setCurrentUser(userData);
+      } else {
+        // Token is invalid or expired
+        localStorage.removeItem('token');
+        setCurrentUser(null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      localStorage.removeItem('token');
+      setCurrentUser(null);
     }
-  }, [currentUser]);
+  };
+
+  // Authentication methods
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
+        setCurrentUser(data.user);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Login failed:', error);
+      return false;
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setCurrentUser(null);
+  };
 
   // Product management methods
-  const addProduct = (productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newProduct: Product = {
-      ...productData,
-      id: generateId(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    setProducts([...products, newProduct]);
+  const addProduct = async (productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/products`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(productData)
+      });
+
+      if (response.ok) {
+        const newProduct = await response.json();
+        setProducts([...products, newProduct]);
+      }
+    } catch (error) {
+      console.error('Failed to add product:', error);
+    }
   };
 
-  const updateProduct = (updatedProduct: Product) => {
-    const updated = products.map((product) =>
-      product.id === updatedProduct.id
-        ? { ...updatedProduct, updatedAt: new Date() }
-        : product
-    );
-    setProducts(updated);
+  const updateProduct = async (updatedProduct: Product) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/products/${updatedProduct.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedProduct)
+      });
+
+      if (response.ok) {
+        const updated = products.map((product) =>
+          product.id === updatedProduct.id ? updatedProduct : product
+        );
+        setProducts(updated);
+      }
+    } catch (error) {
+      console.error('Failed to update product:', error);
+    }
   };
 
-  const deleteProduct = (id: string) => {
-    setProducts(products.filter((product) => product.id !== id));
+  const deleteProduct = async (id: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/products/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setProducts(products.filter((product) => product.id !== id));
+      }
+    } catch (error) {
+      console.error('Failed to delete product:', error);
+    }
   };
 
   // Sale management methods
-  const addSale = (saleData: Omit<Sale, 'id' | 'date'>) => {
-    // Create new sale
-    const newSale: Sale = {
-      ...saleData,
-      id: generateId(),
-      date: new Date(),
-    };
-    setSales([...sales, newSale]);
+  const addSale = async (saleData: Omit<Sale, 'id' | 'date'>) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/sales`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(saleData)
+      });
 
-    // Update product quantities
-    const updatedProducts = [...products];
-    saleData.products.forEach((item) => {
-      const productIndex = updatedProducts.findIndex((p) => p.id === item.productId);
-      if (productIndex !== -1) {
-        const product = updatedProducts[productIndex];
-        const newQuantity = product.quantity - item.quantity;
-        updatedProducts[productIndex] = {
-          ...product,
-          quantity: newQuantity,
-          updatedAt: new Date(),
-        };
+      if (response.ok) {
+        const newSale = await response.json();
+        setSales([...sales, newSale]);
 
-        // Create low stock notification if needed
-        if (newQuantity <= product.threshold && newQuantity > 0) {
-          const notification: Notification = {
-            id: generateId(),
-            title: 'Low Stock Alert',
-            message: `${product.name} is running low on stock (${newQuantity} remaining)`,
-            type: 'warning',
-            read: false,
-            date: new Date(),
-          };
-          setNotifications([notification, ...notifications]);
-        } else if (newQuantity <= 0) {
-          const notification: Notification = {
-            id: generateId(),
-            title: 'Out of Stock Alert',
-            message: `${product.name} is now out of stock!`,
-            type: 'error',
-            read: false,
-            date: new Date(),
-          };
-          setNotifications([notification, ...notifications]);
-        }
+        // Update product quantities
+        const updatedProducts = [...products];
+        saleData.products.forEach((item) => {
+          const productIndex = updatedProducts.findIndex((p) => p.id === item.productId);
+          if (productIndex !== -1) {
+            const product = updatedProducts[productIndex];
+            const newQuantity = product.quantity - item.quantity;
+            updatedProducts[productIndex] = {
+              ...product,
+              quantity: newQuantity,
+              updatedAt: new Date(),
+            };
+
+            // Create low stock notification if needed
+            if (newQuantity <= product.threshold && newQuantity > 0) {
+              const notification: Notification = {
+                id: generateId(),
+                title: 'Low Stock Alert',
+                message: `${product.name} is running low on stock (${newQuantity} remaining)`,
+                type: 'warning',
+                read: false,
+                date: new Date(),
+              };
+              setNotifications([notification, ...notifications]);
+            } else if (newQuantity <= 0) {
+              const notification: Notification = {
+                id: generateId(),
+                title: 'Out of Stock Alert',
+                message: `${product.name} is now out of stock!`,
+                type: 'error',
+                read: false,
+                date: new Date(),
+              };
+              setNotifications([notification, ...notifications]);
+            }
+          }
+        });
+        
+        setProducts(updatedProducts);
       }
-    });
-    
-    setProducts(updatedProducts);
+    } catch (error) {
+      console.error('Failed to add sale:', error);
+    }
   };
 
   // Notification management methods
@@ -183,27 +230,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications([]);
   };
 
-  // Authentication methods
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // In a real app, this would call an API
-    // For demo, we'll check against mock data
-    const user = mockData.users.find(
-      (u) => u.email === email && password === 'password'
-    );
-    
-    if (user) {
-      setCurrentUser(user);
-      localStorage.setItem('erp_currentUser', JSON.stringify(user));
-      return true;
-    }
-    
-    return false;
-  };
+  // Load initial data
+  useEffect(() => {
+    const fetchData = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
 
-  const logout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem('erp_currentUser');
-  };
+      try {
+        // Fetch products
+        const productsResponse = await fetch(`${API_URL}/products`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (productsResponse.ok) {
+          const productsData = await productsResponse.json();
+          setProducts(productsData);
+        }
+
+        // Fetch sales
+        const salesResponse = await fetch(`${API_URL}/sales`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (salesResponse.ok) {
+          const salesData = await salesResponse.json();
+          setSales(salesData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch initial data:', error);
+      }
+    };
+
+    fetchData();
+  }, [currentUser]);
 
   return (
     <AppContext.Provider

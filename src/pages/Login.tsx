@@ -8,8 +8,8 @@ const LoginPage: React.FC = () => {
   const { login } = useAppContext();
   const navigate = useNavigate();
   
-  const [email, setEmail] = useState('admin@example.com');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -91,26 +91,6 @@ const LoginPage: React.FC = () => {
               </div>
             </div>
             
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember_me"
-                  name="remember_me"
-                  type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="remember_me" className="ml-2 block text-sm text-gray-900">
-                  Remember me
-                </label>
-              </div>
-              
-              <div className="text-sm">
-                <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
-                  Forgot your password?
-                </a>
-              </div>
-            </div>
-            
             {error && (
               <div className="bg-red-50 text-red-700 p-3 rounded-md text-sm">
                 {error}
@@ -128,17 +108,6 @@ const LoginPage: React.FC = () => {
               </Button>
             </div>
           </form>
-          
-          <div className="mt-6">
-            <p className="text-center text-sm text-gray-600">
-              Demo credentials:
-            </p>
-            <div className="mt-2 text-center text-xs text-gray-500">
-              <p>Admin: admin@example.com / password</p>
-              <p>Manager: manager@example.com / password</p>
-              <p>Employee: employee@example.com / password</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
