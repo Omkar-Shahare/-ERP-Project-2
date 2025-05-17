@@ -18,7 +18,7 @@ interface AppContextType {
   markNotificationAsRead: (id: string) => void;
   clearNotifications: () => void;
   // User methods
-  login: (email: string, password: string) => Promise<boolean>;
+  loginWithGoogle: (token: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -52,7 +52,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const userData = await response.json();
         setCurrentUser(userData);
       } else {
-        // Token is invalid or expired
         localStorage.removeItem('token');
         setCurrentUser(null);
       }
@@ -63,15 +62,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Authentication methods
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const loginWithGoogle = async (token: string): Promise<boolean> => {
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
+      const response = await fetch(`${API_URL}/auth/google-login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ token })
       });
 
       if (response.ok) {
@@ -82,7 +80,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return false;
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error('Google login failed:', error);
       return false;
     }
   };
@@ -275,7 +273,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addSale,
         markNotificationAsRead,
         clearNotifications,
-        login,
+        loginWithGoogle,
         logout,
       }}
     >
