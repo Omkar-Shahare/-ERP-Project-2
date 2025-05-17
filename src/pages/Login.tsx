@@ -25,12 +25,21 @@ const LoginPage: React.FC = () => {
     if (window.google) {
       window.google.accounts.id.initialize({
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        callback: handleGoogleResponse
+        callback: handleGoogleResponse,
+        ux_mode: 'redirect',  // Change to redirect mode
+        login_uri: window.location.origin + '/auth/google/callback', // Add redirect URI
+        auto_select: false
       });
 
       window.google.accounts.id.renderButton(
         document.getElementById('googleButton')!,
-        { theme: 'outline', size: 'large', width: 250 }
+        { 
+          type: 'standard',  // Use standard button type
+          theme: 'outline', 
+          size: 'large', 
+          width: 250,
+          text: 'signin_with'  // Show "Sign in with Google" text
+        }
       );
     }
   }, []);
