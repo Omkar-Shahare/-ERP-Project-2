@@ -10,6 +10,7 @@ declare global {
         id: {
           initialize: (config: any) => void;
           renderButton: (element: HTMLElement, config: any) => void;
+          prompt: () => void;
         };
       };
     };
@@ -21,24 +22,19 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Initialize Google Sign-In
     if (window.google) {
       window.google.accounts.id.initialize({
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
         callback: handleGoogleResponse,
-        ux_mode: 'redirect',  // Change to redirect mode
-        login_uri: window.location.origin + '/auth/google/callback', // Add redirect URI
-        auto_select: false
       });
 
       window.google.accounts.id.renderButton(
         document.getElementById('googleButton')!,
         { 
-          type: 'standard',  // Use standard button type
-          theme: 'outline', 
-          size: 'large', 
+          theme: 'outline',
+          size: 'large',
           width: 250,
-          text: 'signin_with'  // Show "Sign in with Google" text
+          type: 'standard'
         }
       );
     }
